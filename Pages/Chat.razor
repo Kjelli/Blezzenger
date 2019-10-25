@@ -1,101 +1,69 @@
 ﻿@page "/chat"
-@using Microsoft.AspNetCore.SignalR.Client;
-@using Blezzenger.Components;
-@using Blezzenger.Hubs;
-@using Blezzenger.Models;
 
-<div id="chat-container">
-    <div class="ui fluid grid">
-        @foreach (var message in Messages)
-        {
-            <Message Model="message" />
-        }
+@using Blezzenger.ViewModels;
+@using Blezzenger.Components;
+
+@inject ChatViewModel _vm
+
+@if (_vm.IsAuthenticated == true && _vm.HasLoadedMessages)
+{
+    <div id="chat-container">
+        <div class="ui fluid grid">
+            @foreach (var message in _vm.Messages)
+            {
+                <MessageComponent Message="message" />
+            }
+        </div>
     </div>
-</div>
-<div class="ui fluid segment"
-     style="position: fixed; width: inherit; bottom: 0;">
-    <form class="ui form"
-          @onsubmit="SendMessage">
-        <div class="field">
-            <div class="ui text input">
-                <input type="text"
-                       placeholder="Send a message..."
-                       @bind="_messageInput" />
+
+    <div class="ui fluid segment" style="position: fixed; width: inherit; bottom: 0;">
+        <form class="ui form" @onsubmit="_vm.SendMessage">
+            <div class="field">
+                <div class="ui text input">
+                    <input type="text" placeholder="Send a message..." @bind="_vm.MessageInput" />
+                </div>
+            </div>
+        </form>
+    </div>
+}
+else if (_vm.IsAuthenticated == false)
+{
+    <div class="ui middle aligned center aligned full-height grid">
+        <div class="row">
+            <div class="four wide column">
+                <h1>Log in to use the chat</h1>
+                <form class="ui form" @onsubmit="_vm.SelectedUsername">
+                    <div class="field">
+                        <div class="ui text input">
+                            <input type="text" @bind="_vm.UsernameInput" />
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
-    </form>
-</div>
+    </div>
+}
+else
+{
+    <div class="ui middle aligned center aligned full-height grid">
+        <div class="row">
+            <div class="column">
+                <div class="ui active centered inline loader"></div>
+            </div>
+        </div>
+    </div>
+}
+
 @code{
-    private IList<string> _seenJoiners { get; set; }
-    private HubConnection _connection;
-    public IList<MessageModel> Messages { get; set; }
-
-    private string _username = "Julius" + new Random().Next(1, 1000);
-    private string _messageInput;
-
-    protected override async void OnInitialized()
+    protected override void OnInitialized()
     {
-        _seenJoiners = new List<string>();
-        Messages = new List<MessageModel>();
-
-        _connection = new HubConnectionBuilder()
-        .WithUrl("https://localhost:5001/chatHub")
-        .Build();
-
-        _connection.Closed += async (error) =>
-        {
-            Messages.Add(new MessageModel("Connection closed, retrying...", "System", false, true));
-            await Task.Delay(new Random().Next(0, 5) * 1000);
-            await _connection.StartAsync();
-        };
-
-        _connection.On<string, string>(ChatHub.SendMessageMethod, (sender, message) =>
-        {
-            var isConsecutive = Messages.LastOrDefault()?.Sender.Equals(sender) == true;
-            Messages.Add(new MessageModel(message, sender, false, isConsecutiveFromSender: isConsecutive));
-            StateHasChanged();
-        });
-
-        _connection.On<string>(ChatHub.SendHelloMethod, async (joiner) =>
-        {
-            Messages.Add(new MessageModel($"{joiner} has entered the room", "System", false, true));
-            await _connection.InvokeAsync(nameof(ChatHub.SendHelloBack), _username);
-            StateHasChanged();
-        });
-
-        _connection.On<string>(ChatHub.SendHelloBackMethod, (participant) =>
-        {
-            if (_seenJoiners.Contains(participant)) return;
-
-            _seenJoiners.Add(participant);
-
-            Messages.Add(new MessageModel($"{participant} is on", "System", false, true));
-            StateHasChanged();
-        });
-
-        await _connection.StartAsync();
-        await _connection.InvokeAsync(nameof(ChatHub.SendHello), _username);
-
-        Messages.Add(new MessageModel("Welcome to the Blezzenger™ Chat!", "System", false, true));
-        Messages.Add(new MessageModel("Enter messages down below, and everyone online can see your messages!", "System", false, true));
-        Messages.Add(new MessageModel("Fully GDPR compliant! Nothing is saved!", "System", false, true));
+        _vm.OnChange += () => StateHasChanged();
+        _vm.OnInitialized();
         StateHasChanged();
     }
 
-    private bool _isSending;
-    private async void SendMessage()
+    protected override void OnAfterRender(bool firstRender)
     {
-        if (_isSending) return;
-        _isSending = true;
-
-        var isConsecutive = Messages.LastOrDefault()?.Sender.Equals(_username) == true;
-
-        var message = new MessageModel(_messageInput, _username, true, isConsecutiveFromSender: isConsecutive);
-        await _connection.InvokeAsync(nameof(ChatHub.SendMessage), message.Sender, message.Message);
-        Messages.Add(message);
-        _messageInput = "";
-
-        _isSending = false;
-        StateHasChanged();
+        _vm.OnAfterRender(firstRender);
     }
 }

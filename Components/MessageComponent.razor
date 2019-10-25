@@ -4,7 +4,7 @@
     <div class="@_columnClasses column">
         <div class="ui @_flipClass grid">
             <div class="row">
-                @if (!Model.IsSystemMessage)
+                @if (!Message.IsSystemMessage)
                 {
                     <div class="two wide computer four wide tablet four wide mobile center aligned column">
                         <img src="/img/avatar.png"
@@ -14,7 +14,7 @@
                 }
                 <div class="@_contentClass column">
                     <div class="ui fluid chat-bubble @_segmentClass">
-                        <span class="chat-sender">@(Model.IsSystemMessage ? "" : $"{Model.Sender}: ")</span>@Model.Message
+                        <span class="chat-sender">@(Message.IsSystemMessage ? "" : $"{Message.SenderName}: ")</span>@Message.Content
                     </div>
                 </div>
             </div>
@@ -24,27 +24,27 @@
 
 @code {
     [Parameter]
-    public MessageModel Model { get; set; }
+    public Message Message { get; set; }
 
     private string _columnClasses
     {
         get
         {
-            var classes = Model.IsSystemMessage ? "sixteen wide" : "twelve wide";
-            classes += Model.IsSentByMe ? " right floated" : "";
+            var classes = Message.IsSystemMessage ? "sixteen wide" : "twelve wide";
+            classes += Message.IsSentByMe ? " right floated" : "";
             return classes;
         }
     }
-    private string _flipClass => Model.IsSentByMe ? "computer reversed tablet reversed mobile reversed" : "";
+    private string _flipClass => Message.IsSentByMe ? "computer reversed tablet reversed mobile reversed" : "";
     private string _segmentClass
     {
         get
         {
-            var classes = Model.IsSystemMessage ? "basic center aligned segment" : "segment";
-            classes += Model.IsSentByMe ? " blue inverted" : "";
+            var classes = Message.IsSystemMessage ? "basic center aligned segment" : "segment";
+            classes += Message.IsSentByMe ? " blue inverted" : "";
             return classes;
         }
     }
-    private string _imageClass => Model.IsConsecutiveFromSender ? "consecutive" : "";
-    private string _contentClass => Model.IsSystemMessage ? "sixteen wide" : "fourteen wide computer twelve wide tablet twelve wide mobile";
+    private string _imageClass => Message.IsConsecutive ? "consecutive" : "";
+    private string _contentClass => Message.IsSystemMessage ? "sixteen wide" : "fourteen wide computer twelve wide tablet twelve wide mobile";
 }

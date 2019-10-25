@@ -1,4 +1,8 @@
+using Blezzenger.Db;
 using Blezzenger.Hubs;
+using Blezzenger.Services;
+using Blezzenger.ViewModels;
+using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +29,11 @@ namespace Blezzenger
             services.AddServerSideBlazor()
                 .AddCircuitOptions(options => { options.DetailedErrors = true; });
             services.AddSignalR();
+            services.AddDbContext<ChatContext>();
+
+            services.AddScoped<ChatViewModel>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddStorage();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
