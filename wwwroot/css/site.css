@@ -1,16 +1,32 @@
 
-.content{
+.content {
     padding-top: 4em;
 }
 
-img.consecutive{
+img.consecutive {
     opacity: 0;
 }
 
-.inverted.card *{
+.inverted.card * {
     color: #fff !important;
 }
 
-#chat-container{
-    padding-bottom:5rem;
+#chat-container {
+    padding-bottom: 7rem;
 }
+
+.chat-bubble{
+    border-radius: 3em !important;
+}
+
+.chat-sender{
+    opacity:0.4;
+}
+
+    #chat-container .row {
+        padding-bottom: 0.1rem !important;
+    }
+
+        #chat-container .row .basic {
+            padding-bottom: 0 !important;
+        }

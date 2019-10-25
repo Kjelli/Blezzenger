@@ -13,8 +13,8 @@
                     </div>
                 }
                 <div class="@_contentClass column">
-                    <div class="ui fluid @_segmentClass">
-                        @Model.Message
+                    <div class="ui fluid chat-bubble @_segmentClass">
+                        <span class="chat-sender">@(Model.IsSystemMessage ? "" : $"{Model.Sender}: ")</span>@Model.Message
                     </div>
                 </div>
             </div>

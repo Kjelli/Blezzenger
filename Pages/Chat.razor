@@ -26,14 +26,16 @@
     </form>
 </div>
 @code{
+    private IList<string> _seenJoiners { get; set; }
     private HubConnection _connection;
     public IList<MessageModel> Messages { get; set; }
 
-    private string _username = "Julius" + DateTime.Now;
+    private string _username = "Julius" + new Random().Next(1, 1000);
     private string _messageInput;
 
     protected override async void OnInitialized()
     {
+        _seenJoiners = new List<string>();
         Messages = new List<MessageModel>();
 
         _connection = new HubConnectionBuilder()
@@ -42,6 +44,7 @@
 
         _connection.Closed += async (error) =>
         {
+            Messages.Add(new MessageModel("Connection closed, retrying...", "System", false, true));
             await Task.Delay(new Random().Next(0, 5) * 1000);
             await _connection.StartAsync();
         };
@@ -53,12 +56,31 @@
             StateHasChanged();
         });
 
+        _connection.On<string>(ChatHub.SendHelloMethod, async (joiner) =>
+        {
+            Messages.Add(new MessageModel($"{joiner} has entered the room", "System", false, true));
+            await _connection.InvokeAsync(nameof(ChatHub.SendHelloBack), _username);
+            StateHasChanged();
+        });
+
+        _connection.On<string>(ChatHub.SendHelloBackMethod, (participant) =>
+        {
+            if (_seenJoiners.Contains(participant)) return;
+
+            _seenJoiners.Add(participant);
+
+            Messages.Add(new MessageModel($"{participant} is on", "System", false, true));
+            StateHasChanged();
+        });
 
         await _connection.StartAsync();
+        await _connection.InvokeAsync(nameof(ChatHub.SendHello), _username);
+
         Messages.Add(new MessageModel("Welcome to the Blezzenger™ Chat!", "System", false, true));
+        Messages.Add(new MessageModel("Enter messages down below, and everyone online can see your messages!", "System", false, true));
+        Messages.Add(new MessageModel("Fully GDPR compliant! Nothing is saved!", "System", false, true));
         StateHasChanged();
     }
-
 
     private bool _isSending;
     private async void SendMessage()
