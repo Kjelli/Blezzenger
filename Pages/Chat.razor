@@ -1,0 +1,79 @@
+﻿@page "/chat"
+@using Microsoft.AspNetCore.SignalR.Client;
+@using Blezzenger.Components;
+@using Blezzenger.Hubs;
+@using Blezzenger.Models;
+
+<div id="chat-container">
+    <div class="ui fluid grid">
+        @foreach (var message in Messages)
+        {
+            <Message Model="message" />
+        }
+    </div>
+</div>
+<div class="ui fluid segment"
+     style="position: fixed; width: inherit; bottom: 0;">
+    <form class="ui form"
+          @onsubmit="SendMessage">
+        <div class="field">
+            <div class="ui text input">
+                <input type="text"
+                       placeholder="Send a message..."
+                       @bind="_messageInput" />
+            </div>
+        </div>
+    </form>
+</div>
+@code{
+    private HubConnection _connection;
+    public IList<MessageModel> Messages { get; set; }
+
+    private string _username = "Julius" + DateTime.Now;
+    private string _messageInput;
+
+    protected override async void OnInitialized()
+    {
+        Messages = new List<MessageModel>();
+
+        _connection = new HubConnectionBuilder()
+        .WithUrl("https://localhost:5001/chatHub")
+        .Build();
+
+        _connection.Closed += async (error) =>
+        {
+            await Task.Delay(new Random().Next(0, 5) * 1000);
+            await _connection.StartAsync();
+        };
+
+        _connection.On<string, string>(ChatHub.SendMessageMethod, (sender, message) =>
+        {
+            var isConsecutive = Messages.LastOrDefault()?.Sender.Equals(sender) == true;
+            Messages.Add(new MessageModel(message, sender, false, isConsecutiveFromSender: isConsecutive));
+            StateHasChanged();
+        });
+
+
+        await _connection.StartAsync();
+        Messages.Add(new MessageModel("Welcome to the Blezzenger™ Chat!", "System", false, true));
+        StateHasChanged();
+    }
+
+
+    private bool _isSending;
+    private async void SendMessage()
+    {
+        if (_isSending) return;
+        _isSending = true;
+
+        var isConsecutive = Messages.LastOrDefault()?.Sender.Equals(_username) == true;
+
+        var message = new MessageModel(_messageInput, _username, true, isConsecutiveFromSender: isConsecutive);
+        await _connection.InvokeAsync(nameof(ChatHub.SendMessage), message.Sender, message.Message);
+        Messages.Add(message);
+        _messageInput = "";
+
+        _isSending = false;
+        StateHasChanged();
+    }
+}

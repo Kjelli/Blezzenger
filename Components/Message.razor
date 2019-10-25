@@ -1,0 +1,50 @@
+﻿@using Blezzenger.Models;
+
+<div class="row">
+    <div class="@_columnClasses column">
+        <div class="ui @_flipClass grid">
+            <div class="row">
+                @if (!Model.IsSystemMessage)
+                {
+                    <div class="two wide computer four wide tablet four wide mobile center aligned column">
+                        <img src="/img/avatar.png"
+                             class="@_imageClass"
+                             style="width: 3rem !important; height: 3rem !important;" />
+                    </div>
+                }
+                <div class="@_contentClass column">
+                    <div class="ui fluid @_segmentClass">
+                        @Model.Message
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public MessageModel Model { get; set; }
+
+    private string _columnClasses
+    {
+        get
+        {
+            var classes = Model.IsSystemMessage ? "sixteen wide" : "twelve wide";
+            classes += Model.IsSentByMe ? " right floated" : "";
+            return classes;
+        }
+    }
+    private string _flipClass => Model.IsSentByMe ? "computer reversed tablet reversed mobile reversed" : "";
+    private string _segmentClass
+    {
+        get
+        {
+            var classes = Model.IsSystemMessage ? "basic center aligned segment" : "segment";
+            classes += Model.IsSentByMe ? " blue inverted" : "";
+            return classes;
+        }
+    }
+    private string _imageClass => Model.IsConsecutiveFromSender ? "consecutive" : "";
+    private string _contentClass => Model.IsSystemMessage ? "sixteen wide" : "fourteen wide computer twelve wide tablet twelve wide mobile";
+}

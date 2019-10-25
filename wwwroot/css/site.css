@@ -1,0 +1,16 @@
+
+.content{
+    padding-top: 4em;
+}
+
+img.consecutive{
+    opacity: 0;
+}
+
+.inverted.card *{
+    color: #fff !important;
+}
+
+#chat-container{
+    padding-bottom:5rem;
+}
